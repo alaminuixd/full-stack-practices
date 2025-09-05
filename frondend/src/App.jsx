@@ -1,5 +1,5 @@
-import Post from "./components/post/Post";
+import PostSinger from "./components/post/PostSinger";
 
 export default function App() {
-  return <Post />;
+  return <PostSinger />;
 }

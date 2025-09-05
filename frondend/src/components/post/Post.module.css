@@ -8,10 +8,10 @@
   }
   /* avatar-wrapper */
   .post-wrapper form > div:nth-child(1) > div {
-    @apply block w-[150px] h-[150px] rounded-full mb-5 mx-auto clear-both overflow-hidden;
+    @apply block w-[150px] h-[150px] border-gray-300 border rounded-full mb-5 mx-auto clear-both overflow-hidden;
   }
   .post-wrapper form > div:nth-child(1) > div img {
-    @apply w-full;
+    @apply w-[120%] h-[120%] object-cover;
   }
   .post-wrapper form > div:nth-child(1) > input {
     @apply hidden;

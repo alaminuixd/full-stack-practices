@@ -5,6 +5,7 @@ import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
 import multer from "multer";
 import createUploader from "./lib/createUploader.js";
+import fileUploadTwo from "./lib/upload2.js";
 import createMissingFolder from "./lib/createMissingFolder.js";
 // core modules
 import path from "path";
@@ -28,7 +29,7 @@ app.use(express.json());
 app.use(cors());
 app.use("/singers", express.static(SINGERS_FILE_DIR));
 // multer
-const upload = createUploader({
+const upload = fileUploadTwo({
   folder: SINGERS_FILE_DIR,
   maxSizeMB: 3,
   allowedTypes: ["jpg", "jpeg", "png", "gif", "webp"],

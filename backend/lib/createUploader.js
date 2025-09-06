@@ -49,14 +49,14 @@ const createUploader = ({
   });
 
   const allowedRegex = new RegExp(`\\.(${allowedTypes.join("|")})$`, "i");
-
+  // in "\\." "." flag mean any character. So "." is scaped by \ and \ by \
   return multer({
     storage,
     limits: { fileSize: maxSizeMB * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
       if (
         !allowedRegex.test(file.originalname) ||
-        !allowedTypes.includes(file.mimetype.split("/")[1])
+        !allowedTypes.includes(file.mimetype.split("/")[1]) // mimetypes = "image/jpeg", "image/png"
       ) {
         return cb(
           new Error(`Only these types are allowed: ${allowedTypes.join(", ")}`)

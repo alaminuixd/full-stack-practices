@@ -5,7 +5,7 @@ import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
 import multer from "multer";
 import createUploader from "./lib/createUploader.js";
-import fileUploadTwo from "./lib/upload2.js";
+import fileUploadTwo from "./lib/mkUploader.js";
 import createMissingFolder from "./lib/createMissingFolder.js";
 // core modules
 import path from "path";

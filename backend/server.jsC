@@ -4,10 +4,9 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
 import multer from "multer";
-/* import createUploader from "./lib/createUploader.js";
-import fileUploadTwo from "./lib/mkUploader.js"; */
+import createUploader from "./lib/createUploader.js";
+import fileUploadTwo from "./lib/mkUploader.js";
 import createMissingFolder from "./lib/createMissingFolder.js";
-import createUploaderTwo from "./lib/createUploader.2.js";
 // core modules
 import path from "path";
 import { fileURLToPath } from "url";
@@ -30,7 +29,7 @@ app.use(express.json());
 app.use(cors());
 app.use("/singers", express.static(SINGERS_FILE_DIR));
 // multer
-const upload = createUploaderTwo({
+const upload = fileUploadTwo({
   folder: SINGERS_FILE_DIR,
   maxSizeMB: 3,
   allowedTypes: ["jpg", "jpeg", "png", "gif", "webp"],

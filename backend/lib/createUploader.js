@@ -68,24 +68,3 @@ const createUploader = ({
 };
 
 export default createUploader;
-
-/* 
-
-import createUploader from "./upload.js";
-
-// Upload avatar
-const uploadAvatar = createUploader({ folder: "./avatars", maxSizeMB: 2, allowedTypes: ["jpg","png"] });
-
-app.post("/upload-avatar", uploadAvatar.single("avatar"), (req, res) => {
-  res.send({ file: req.file });
-});
-
-// Upload multiple images
-const uploadImages = createUploader({ folder: "./images", maxSizeMB: 10, allowedTypes: ["jpg","png","gif"] });
-app.post("/upload-images", uploadImages.array("photos", 5), (req, res) => {
-  res.send({ files: req.files });
-});
-
-app.listen(3000, () => console.log("Server running on port 3000"));
-
-*/

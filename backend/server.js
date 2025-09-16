@@ -82,7 +82,8 @@ app.post(
       let players = [];
       try {
         const data = await fs.readFile(PLAYERS_DATA_PATH, "utf8");
-        players = data.trim() ? JSON.parse(data) : [];
+        const parsed = data?.trim() ? JSON.parse(data) : [];
+        players = Array.isArray(parsed) ? parsed : [];
       } catch (error) {
         if (error.code === "ENOENT") {
           await fs.writeFile(PLAYERS_DATA_PATH, "[]");
@@ -113,7 +114,8 @@ app.get("/api/players", async (req, res) => {
     try {
       // try to add players data from json
       const data = await fs.readFile(PLAYERS_DATA_PATH, "utf8");
-      players = data.trim() ? JSON.parse(data) : [];
+      const parsed = data.trim() ? JSON.parse(data) : [];
+      players = Array.isArray(parsed) ? parsed : [];
     } catch (error) {
       if (error.code === "ENOENT") {
         players = [];
@@ -133,7 +135,8 @@ app.get("/api/players/:id", async (req, res) => {
     let players = [];
     try {
       const data = await fs.readFile(PLAYERS_DATA_PATH, "utf8");
-      players = data.trim() ? JSON.parse(data) : [];
+      const parsed = data.trim() ? JSON.parse(data) : [];
+      players = Array.isArray(parsed) ? parsed : [];
     } catch (error) {
       if (error.code === "ENOENT") {
         return res.status(404).json({ message: "Server: No players found!" });
@@ -157,7 +160,8 @@ app.delete("/api/players/:id", async (req, res) => {
     let players = [];
     try {
       const data = await fs.readFile(PLAYERS_DATA_PATH, "utf8");
-      players = data.trim() ? JSON.parse(data) : [];
+      const parsed = data.trim() ? JSON.parse(data) : [];
+      players = Array.isArray(parsed) ? parsed : [];
     } catch (error) {
       if (error.code === "ENOENT") {
         return res.status(404).json({ message: "Server: No players found" });

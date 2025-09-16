@@ -69,25 +69,172 @@ const upload = multer({
   },
 });
 
-app.get("/api/players", async (req, res) => {
-  try {
-    res.status(200).json({ message: "Sucess!" });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error!" });
-  }
-});
-
 app.post(
   "/api/players",
   upload.fields([{ name: "avatar", maxCount: 1 }]),
   async (req, res) => {
     try {
       const { name, spouse } = req.body;
-      res.status(201).json({ message: "player created" });
+      if (!name?.trim() || !spouse?.trim()) {
+        return res
+          .status(400)
+          .json({ message: "Server: All fields are required" });
+      }
+      let players = [];
+      try {
+        const data = await fs.readFile(PLAYERS_DATA_PATH, "utf8");
+        const parsed = data.trim() ? JSON.parse(data) : [];
+        players = Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        if (error.code === "ENOENT") {
+          await fs.writeFile(PLAYERS_DATA_PATH, "[]");
+          players = [];
+        } else {
+          throw error;
+        }
+      }
+      console.log(req.files);
+      const player = {
+        id: uuidv4(),
+        name,
+        spouse,
+        imgURL: req.files?.avatar[0].filename || null,
+      };
+      players.push(player);
+      await fs.writeFile(PLAYERS_DATA_PATH, JSON.stringify(players, null, 2));
+      res.status(201).json({ message: "player created " + { ...player } });
     } catch (error) {
-      res.status(500).json({ message: "error creating player" });
+      res.status(500).json({ message: "Server: error creating player" });
     }
   }
 );
+
+app.get("/api/players", async (req, res) => {
+  try {
+    let players = [];
+    try {
+      const data = await fs.readFile(PLAYERS_DATA_PATH, "utf8");
+      const parsed = data?.trim() ? JSON.parse(data) : [];
+      players = Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        players = [];
+      } else {
+        throw error;
+      }
+    }
+    res.status(200).json(players);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error!" });
+  }
+});
+
+app.get("/api/players/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    let players = [];
+    try {
+      const data = await fs.readFile(PLAYERS_DATA_PATH, "utf8");
+      const parsed = data?.trim() ? JSON.parse(data) : [];
+      players = Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        return res.status(404).json({ message: "No player found." + error });
+      } else {
+        throw error;
+      }
+    }
+    const foundPlayer = players.find((p) => String(p.id) === String(id));
+    res.status(200).json(foundPlayer);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error!" });
+  }
+});
+
+/* app.delete("/api/players/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(404).json({ message: `Server: ${id} not found` });
+    }
+    let players = [];
+    try {
+      const data = await fs.readFile(PLAYERS_DATA_PATH, "utf8");
+      const parsed = data?.trim() ? JSON.parse(data) : [];
+      players = Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        return res
+          .status(404)
+          .json({ message: "Server: Player doesn't exist" });
+      } else {
+        throw error;
+      }
+    }
+    const playerToDelete = players.find((p) => String(p.id) === String(id));
+    if (!playerToDelete) {
+      return res.status(404).json({ message: "Server: Player not found" });
+    }
+    const newPlayers = players.filter((p) => String(p.id) !== String(id));
+    await fs.writeFile(PLAYERS_DATA_PATH, JSON.stringify(newPlayers, null, 2));
+    // delete image
+    if (playerToDelete.imgURL) {
+      const deleteImgPath = path.join(PLAYER_UPLOAD_DIR, playerToDelete.imgURL);
+      try {
+        await fs.unlink(deleteImgPath);
+        console.log(deleteImgPath.split("/").pop() + " deleted successfully");
+      } catch (error) {
+        if (error.code === "ENOENT") {
+          console.log("No image found");
+        }
+      }
+    }
+    res
+      .status(200)
+      .json({ message: "Server: Player deleted.", player: playerToDelete });
+  } catch (error) {
+    res.status(500).json("Server error: " + error);
+  }
+}); */
+
+app.delete("/api/players/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(404).json({ message: "Player id not found!" });
+    }
+    let players = [];
+    try {
+      const data = await fs.readFile(PLAYERS_DATA_PATH, "utf8");
+      const parsed = data?.trim() ? JSON.parse(data) : [];
+      players = Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        return res.status(404).json({ message: "Player not found" });
+      } else {
+        throw error;
+      }
+    }
+    const playerToDelete = players.find((p) => p.id === id);
+    if (!playerToDelete) {
+      return res.status(404).json({ message: "Serer: Player not found" });
+    }
+    const newPlayers = players.filter((p) => p.id !== id);
+    await fs.writeFile(PLAYERS_DATA_PATH, JSON.stringify(newPlayers, null, 2));
+    if (playerToDelete.imgURL) {
+      const imgLink = path.join(PLAYER_UPLOAD_DIR, playerToDelete.imgURL);
+      try {
+        fs.unlink(imgLink);
+      } catch (error) {
+        console.log("Server: Error deleting image " + error);
+      }
+    }
+    res
+      .status(200)
+      .json({ messag: "Server: Player Deleted", player: playerToDelete });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error });
+  }
+});
 
 app.listen(PORT, () => console.log(`Listening to the PORT: ${PORT}`));

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import fileUploader from "../lib/file.upload.js";
+import { PLAYER_UPLOAD_DIR } from "../controllers/player.controllers.js";
 import {
   createPlayer,
   getAllPlayers,
@@ -13,7 +14,9 @@ const playerRouter = Router();
 
 playerRouter.post(
   "/",
-  fileUploader().fields([{ name: "avatar", maxCount: 1 }]),
+  fileUploader({ upload: PLAYER_UPLOAD_DIR, maxFileSize: 5 }).fields([
+    { name: "avatar", maxCount: 1 },
+  ]),
   createPlayer
 );
 

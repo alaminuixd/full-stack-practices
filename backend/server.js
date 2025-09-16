@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 // custom modules
-import playerRouter from "./routes/player.router.js";
+import playerRouter from "./routes/player.routes.js";
 import ROOT_DIR from "./lib/__dirname.js";
 import { PLAYER_UPLOAD_DIR } from "./controllers/player.controllers.js";
 // core modules

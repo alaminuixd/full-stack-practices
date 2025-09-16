@@ -160,7 +160,7 @@ app.delete("/api/players/:id", async (req, res) => {
     let players = [];
     try {
       const data = await fs.readFile(PLAYERS_DATA_PATH, "utf8");
-      const parsed = data.trim() ? JSON.parse(data) : [];
+      const parsed = data?.trim() ? JSON.parse(data) : [];
       players = Array.isArray(parsed) ? parsed : [];
     } catch (error) {
       if (error.code === "ENOENT") {

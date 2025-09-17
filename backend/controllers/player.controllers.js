@@ -1,12 +1,12 @@
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import fs from "fs/promises";
-import ROOT_DIR from "../lib/__dirname.js";
+import ROOT_DIR from "../lib/dirname.js";
 
 // Paths
-const UPLOAD_DIR = path.join(ROOT_DIR, "public", "upload");
+export const UPLOAD_DIR = path.join(ROOT_DIR, "public", "upload");
 export const PLAYER_UPLOAD_DIR = path.join(UPLOAD_DIR, "players");
-const DATA_DIR = path.join(ROOT_DIR, "public", "data");
+export const DATA_DIR = path.join(ROOT_DIR, "public", "data");
 export const PLAYERS_DATA_PATH = path.join(DATA_DIR, "players.json");
 
 // CREATE
@@ -24,7 +24,7 @@ export const createPlayer = async (req, res) => {
       if (err.code === "ENOENT") await fs.writeFile(PLAYERS_DATA_PATH, "[]");
       else throw err;
     }
-
+    // console.log(req.files.avatar);
     const player = {
       id: uuidv4(),
       name: name.trim(),
@@ -79,28 +79,42 @@ export const getSinglePlayer = async (req, res) => {
 export const replacePlayer = async (req, res) => {
   try {
     const { id } = req.params;
-    let { name, spouse, imgURL } = req.body;
-
+    const { name, spouse, imgURL } = req.body;
     if (!name?.trim() || !spouse?.trim() || !imgURL?.trim())
-      return res.status(400).json({ message: "All fields are required" });
+      return res
+        .status(400)
+        .json({ message: "Server: All fields are required!" });
 
     const data = await fs.readFile(PLAYERS_DATA_PATH, "utf8");
     let players = JSON.parse(data) || [];
     const index = players.findIndex((p) => p.id === id);
-    if (index === -1)
-      return res.status(404).json({ message: "Player not found" });
-
+    if (index === -1) {
+      return res.status(404).json({ message: "Server: No player found" });
+    }
+    // Store old image before updating
+    const oldImage = players[index].imgURL;
     players[index] = {
       ...players[index],
       name: name.trim(),
       spouse: spouse.trim(),
       imgURL,
     };
+    if (req.files?.avatar?.[0]?.filename)
+      players[index].imgURL = req.files.avatar[0].filename;
+    if (oldImage && oldImage !== players[index].imgURL) {
+      const oldImagePath = path.join(PLAYER_UPLOAD_DIR, oldImage);
+      try {
+        await fs.unlink(oldImagePath);
+        console.log("Old image is deleted.");
+      } catch (error) {
+        if (error.code !== "ENOENT") {
+          console.error("Error deleting old image", error);
+        }
+      }
+    }
     await fs.writeFile(PLAYERS_DATA_PATH, JSON.stringify(players, null, 2));
-
     res.status(200).json({ message: "Player updated", player: players[index] });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -113,11 +127,32 @@ export const updatePlayer = async (req, res) => {
     let players = JSON.parse(data) || [];
     const player = players.find((p) => p.id === id);
     if (!player) return res.status(404).json({ message: "Player not found" });
-
+    // Store old image before updating
+    const oldImage = player.imgURL;
+    // Update fields from body
     const { name, spouse, imgURL } = req.body;
     if (name !== undefined) player.name = name.trim();
     if (spouse !== undefined) player.spouse = spouse.trim();
     if (imgURL !== undefined) player.imgURL = imgURL;
+
+    // Update avatar from uploaded file
+    if (req.files?.avatar?.[0]?.filename) {
+      player.imgURL = req.files.avatar[0].filename;
+
+      // Delete old image if it exists and is different
+      console.log("Old image: ", oldImage);
+      console.log("Player.imgURL: ", player.imgURL);
+      if (oldImage && oldImage !== player.imgURL) {
+        const oldImagePath = path.join(PLAYER_UPLOAD_DIR, oldImage);
+        try {
+          await fs.unlink(oldImagePath);
+          console.log("Old image deleted:", oldImagePath);
+        } catch (err) {
+          if (err.code !== "ENOENT")
+            console.error("Error deleting old image:", err);
+        }
+      }
+    }
 
     await fs.writeFile(PLAYERS_DATA_PATH, JSON.stringify(players, null, 2));
     res.status(200).json({ message: "Player updated", player });

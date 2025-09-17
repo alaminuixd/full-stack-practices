@@ -24,9 +24,21 @@ playerRouter.get("/", getAllPlayers);
 
 playerRouter.get("/:id", getSinglePlayer);
 
-playerRouter.put("/:id", replacePlayer);
+playerRouter.put(
+  "/:id",
+  fileUploader({ upload: PLAYER_UPLOAD_DIR }).fields([
+    { name: "avatar", maxCount: 1 },
+  ]),
+  replacePlayer
+);
 
-playerRouter.patch("/:id", updatePlayer);
+playerRouter.patch(
+  "/:id",
+  fileUploader({ upload: PLAYER_UPLOAD_DIR }).fields([
+    { name: "avatar", maxCount: 1 },
+  ]),
+  updatePlayer
+);
 
 playerRouter.delete("/:id", deletePlayer);
 

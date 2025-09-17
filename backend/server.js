@@ -3,8 +3,10 @@ import dotenv from "dotenv";
 import cors from "cors";
 // custom modules
 import playerRouter from "./routes/player.routes.js";
-import ROOT_DIR from "./lib/__dirname.js";
-import { PLAYER_UPLOAD_DIR } from "./controllers/player.controllers.js";
+import {
+  PLAYER_UPLOAD_DIR,
+  DATA_DIR,
+} from "./controllers/player.controllers.js";
 // core modules
 import fs from "fs/promises";
 
@@ -12,7 +14,7 @@ dotenv.config();
 
 // create missing directories
 await fs.mkdir(PLAYER_UPLOAD_DIR, { recursive: true });
-await fs.mkdir(`${ROOT_DIR}/public/data`, { recursive: true });
+await fs.mkdir(DATA_DIR, { recursive: true });
 
 const app = express();
 const PORT = process.env.PORT || 3005;

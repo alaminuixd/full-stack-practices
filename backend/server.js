@@ -33,28 +33,22 @@ const DATA_DIR = path.join(__dirname, "public", "data");
 const IMG_DIR = path.join(UPLOAD_DIR, "images");
 const DATA_PATH = path.join(DATA_DIR, "drivers.json");
 
-// ROUTES
-app.get("/", (req, res) => {
-  try {
-    res.status(200).json({ message: "Success" });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error: " + error.message });
-  }
-});
-
 // MULTER SETUP Starts
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, IMG_DIR);
   },
   filename: (req, file, cb) => {
-    const inputName = req.body.name;
+    const inputName = (req.body.name || "Unknown")
+      .toString()
+      .replace(/s+/g, "-")
+      .replace(/[^a-zA-Z-0-9\-]/g, "")
+      .replace(/(^-+|-+$)/g, "")
+      .replace(/-+/g, "-");
     const extName = path.extname(file.originalname);
     const dateName = new Date().toISOString().split("T")[0];
     const idName = uuidv4().split("-").pop();
     const fullName = `${inputName}-${dateName}-${idName}${extName}`;
-    console.log(`inputName: ${inputName}`);
-    console.log(file);
     cb(null, fullName);
   },
 });
@@ -63,15 +57,39 @@ const fileTypeRegx = new RegExp(`\\.(${allowedFileTypes.join("|")})$`, "i");
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (
+      !fileTypeRegx.test(path.extname(file.originalname).toLowerCase()) ||
+      !allowedFileTypes.includes(file.mimetype.split("/")[1])
+    ) {
+      const errorMessage =
+        allowedFileTypes.length < 2
+          ? `Only ${allowedFileTypes.join("")} is allowed`
+          : `Only ${allowedFileTypes
+              .slice(0, -1)
+              .join(", ")} and ${allowedFileTypes
+              .slice(-1)
+              .join("")} are allowed`;
+      return cb(new Error(errorMessage));
+    }
+    cb(null, true);
+  },
 });
 // MULTER SETUP Ends
 
 app.post(
   "/api/drivers",
-  upload.fields([{ name: "avatar", maxCount: 1 }]),
+  (req, res, next) => {
+    upload.fields([{ name: "avatar", maxCount: 1 }])(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ message: err.message });
+      }
+      next();
+    });
+  },
   async (req, res) => {
     const { name, spouse, imgURL } = req.body;
-    console.log(upload);
+    console.log(req.files);
     try {
       let drivers = [];
       try {
@@ -90,7 +108,7 @@ app.post(
         id: uuidv4(),
         name,
         spouse,
-        imgURL: "",
+        imgURL: req.files.avatar[0].filename || "",
       };
       drivers.push(driver);
       await fs.writeFile(DATA_PATH, JSON.stringify(drivers, null, 2));

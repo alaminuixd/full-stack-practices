@@ -11,11 +11,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3005;
 
-// 🧩 GLOBAL MIDDLEWARES
-app.use(cors());
-app.use(express.json());
-console.log(cors());
-
 // DIRECTORIES setup
 const __filename = fileURLToPath(import.meta.url);
 console.log(__filename);
@@ -29,9 +24,15 @@ const DATA_DIR = path.join(__dirname, "public", "data");
   await fs.mkdir(UPLOAD_DIR, { recursive: true });
   await fs.mkdir(DATA_DIR, { recursive: true });
 })();
+
 // Necessary PATHS
 const IMG_DIR = path.join(UPLOAD_DIR, "images");
 const DATA_PATH = path.join(DATA_DIR, "drivers.json");
+
+// 🧩 GLOBAL MIDDLEWARES
+app.use(cors());
+app.use(express.json());
+app.use("/drivers", express.static(IMG_DIR));
 
 // MULTER SETUP Starts
 const storage = multer.diskStorage({

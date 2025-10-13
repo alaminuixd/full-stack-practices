@@ -1,41 +1,53 @@
 import multer from "multer";
-import fs from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-export default function fileUploader({
-  upload = "upload",
+
+export default function uploader({
+  upload,
   maxFileSize = 5,
-  fileTypes = ["jpg", "jpeg", "png", "gif", "webp"],
+  allowedFileTypes = ["jpg", "jpeg", "png", "gif", "webp"],
 } = {}) {
+  // validation
+  if (!upload) {
+    throw new Error("Please provide an upload directory");
+  }
+
   const storage = multer.diskStorage({
-    destination: async (req, file, cb) => {
-      await fs.mkdir(upload, { recursive: true });
+    destination: (req, file, cb) => {
       cb(null, upload);
     },
     filename: (req, file, cb) => {
-      const fieldName = file.fieldname;
-      const inputName = (req?.body?.name || "unknown")
-        .replace(/\s+/g, "")
-        .replace(/[^a-zA-Z0-9\-]/g, "")
+      const personName = (req.body.name || "Unknown")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
         .replace(/(^-+|-+$)/g, "")
-        .replace(/-+/g, "-");
+        .replace(/[^a-zA-Z0-9\-]/g, "");
       const dateName = new Date().toISOString().split("T")[0];
+      const fieldName = file.fieldname;
       const idName = uuidv4().split("-").pop();
       const extName = path.extname(file.originalname).toLowerCase();
-      const fullName = `${fieldName}-${inputName}-${dateName}-${idName}${extName}`;
+      const fullName = `${personName}-${dateName}-${fieldName}-${idName}${extName}`;
       cb(null, fullName);
     },
   });
-  const fileTypeRegx = new RegExp(`\\.(${fileTypes?.join("|")})$`, "i");
+  const fileTypeRegx = new RegExp(`\\.${allowedFileTypes.join("|")}$`, "i");
   return multer({
     storage,
     limits: { fileSize: maxFileSize * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
       if (
         !fileTypeRegx.test(path.extname(file.originalname).toLowerCase()) ||
-        !fileTypes.includes(file.mimetype.split("/")[1])
+        !allowedFileTypes.includes(file.mimetype.split("/")[1].toLowerCase())
       ) {
-        return cb(new Error(`Only ${fileTypes.join(", ")} types are allowed`));
+        const fileTypeError =
+          allowedFileTypes.length < 2
+            ? `Only ${allowedFileTypes[0]} is allowed`
+            : `Only ${allowedFileTypes
+                .slice(0, -1)
+                .join(", ")} and ${allowedFileTypes
+                .slice(-1)
+                .join("")} are allowed`;
+        return cb(new Error(fileTypeError));
       }
       cb(null, true);
     },
